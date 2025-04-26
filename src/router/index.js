@@ -1,25 +1,64 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from 'vue-router';
 
+// Import your views
+import DashboardView from '../views/DashboardView.vue';
+import LoginView from '../views/LoginView.vue';
+import SettingsView from '../views/SettingsView.vue';
+import AboutView from '../views/AboutView.vue';
+import NotFoundView from '../views/NotFoundView.vue';
+
+// Define your routes
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    name: 'dashboard',
+    component: DashboardView,
+    meta: { requiresAuth: true }, // Protect this route (requires authentication)
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginView,
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: SettingsView,
+    meta: { requiresAuth: true }, // Protect this route (requires authentication)
   },
   {
     path: '/about',
     name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  }
-]
+    component: AboutView,
+  },
+  {
+    path: '/:pathMatch(.*)*', // Catch-all route for 404 errors
+    name: 'not-found',
+    component: NotFoundView,
+  },
+];
 
+// Create the router instance
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
-})
+  history: createWebHistory(process.env.BASE_URL), // Use Webpack's environment variable
+  routes,
+});
 
-export default router
+// Navigation Guard for Authentication
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('token'); // Check for token in localStorage
+
+  // If the route requires authentication and the user is not authenticated
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      next('/login'); // Redirect to login page
+    } else {
+      next(); // Allow access to the route
+    }
+  } else {
+    next(); // Allow access to public routes
+  }
+});
+
+// Export the router
+export default router;
